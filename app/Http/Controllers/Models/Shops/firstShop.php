@@ -1,25 +1,22 @@
 <?php
-
 /*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
+ * @author Osadchyi Serhii
  */
 
 namespace App\Http\Controllers\Models\Shops;
 
 /**
- * Description of firstShop
+ * Model for first shop
  *
  * @author RDSergij
  */
-
+use App\Http\Controllers\Models as Models;
 class firstShop extends aShop {
 
 	public function __construct( $options ) {
 		parent::__construct( $options );
 	}
-	
+
 	/**
 	 * Parse data for model
 	 */
@@ -28,34 +25,29 @@ class firstShop extends aShop {
 		if ( '200' !=  $response->getStatusCode() ) {
 			return null;
 		}
+
 		$datatype = $response->getHeader('content-type');
-		if ( 'text/csv' == $datatype[0] ) {
+
+		if ( $this->getDataType() == $datatype[0] ) {
 			$body = $response->getBody();
-			$this->csvToArray( $body->getContents(), "\t" );
-			$data = $this->getData();
-			$headers = array_shift ( $data );
-			var_dump( $data[0] );
-			$headers = array_map( function( $header ) {
-				$header = str_replace( ' ', '_', $header);
-				$header = strtolower( $header );
-			}, $headers );
-			$records = [];
+			$data = $this->csvToArray( $body->getContents(), true, "\t", "\n" )->getData();
+
 			foreach ( $data as $rows ) {
-				$rows = array_combine ( $headers, $rows );
 				if ( 'Winning Bid (Revenue)' == $rows['event_type'] ) {
 					$records[] = [
-						'shop_id'		=> $this->getShopId(),
+						'shop_id'		=> 1, //$this->getShopId(),
 						'order_id'	    => $rows['unique_transaction_id'],
 						'status'	    => 'approved',
 						'amount'	    => $rows['ebay_total_sale_amount'],
-						'currency_id'	=> Currencies::getCurrencyId( 'usd' ),
+						'currency_id'	=> $this->currencies->getCurrencyId( 'usd' ),
 						'datetime'		=> $rows['click_timestamp'],
 					];
 				}
 			}
+
 			if ( ! empty( $records ) && count( $records ) ) {
-				$orders = new Orders();
-				$orders->saveMany( $records );
+				$orders = new Models\Orders();
+				$orders->multiSave( $records );
 			}
 		} else {
 			//...

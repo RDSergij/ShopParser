@@ -1,17 +1,12 @@
 <?php
-
 /*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
+ * @author Osadchyi Serhii
  */
 
 namespace App\Http\Controllers;
 
-//use App\Http\Controllers\Controller;
-
 /**
- * Description of main
+ * Main controller for schedule run
  *
  * @author RDSergij
  */
@@ -30,7 +25,9 @@ class Main extends Controller {
 						},
 						$shopItem->alias );
 				$shop = new $model( $shopItem );
+				$ShopsObj->setShopBusy( $shopItem->id );
 				$shop->parse();
+				$ShopsObj->setShopUnBusy( $shopItem->id );
 				unset( $shop );
 			}
 		}
